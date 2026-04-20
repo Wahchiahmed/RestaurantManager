@@ -1,6 +1,7 @@
 module com.example.restaurantmanager {
     requires javafx.controls;
     requires javafx.fxml;
+    requires java.sql;
 
 
     opens com.example.restaurantmanager to javafx.fxml;
