@@ -25,6 +25,7 @@ public abstract class Article {
     public int getQuantiteStock() { return quantiteStock; }
     public void setQuantiteStock(int quantiteStock) { this.quantiteStock = quantiteStock; }
 
-    // Méthode abstraite que les enfants devront redéfinir (Polymorphisme)
     public abstract String getDescription();
+
+    public abstract String getType();
 }

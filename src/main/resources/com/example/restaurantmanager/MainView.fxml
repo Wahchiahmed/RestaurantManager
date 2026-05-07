@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.geometry.Insets?>
+
+<AnchorPane
+        prefHeight="680.0"
+        prefWidth="1050.0"
+        styleClass="root-pane"
+        stylesheets="@styles.css"
+        xmlns="http://javafx.com/javafx/17.0.12"
+        xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="com.example.restaurantmanager.Controller.MainController">
+
+    <BorderPane
+            AnchorPane.bottomAnchor="0.0"
+            AnchorPane.leftAnchor="0.0"
+            AnchorPane.rightAnchor="0.0"
+            AnchorPane.topAnchor="0.0">
+
+        <left>
+            <VBox styleClass="sidebar" prefWidth="210.0" spacing="0">
+                <VBox styleClass="sidebar-header" spacing="4">
+                    <Label text="🍽" styleClass="sidebar-icon"/>
+                    <Label text="Restaurant" styleClass="sidebar-title"/>
+                    <Label text="Manager" styleClass="sidebar-subtitle"/>
+                </VBox>
+
+                <VBox styleClass="sidebar-section" VBox.vgrow="ALWAYS">
+                    <Label text="▪  TABLES" styleClass="section-label"/>
+                    <ListView fx:id="listeTables" styleClass="tables-list" VBox.vgrow="ALWAYS"/>
+                </VBox>
+
+                <VBox styleClass="status-legend" spacing="6">
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Label text="●" styleClass="dot-libre"/>
+                        <Label text="Libre" styleClass="legend-text"/>
+                    </HBox>
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Label text="●" styleClass="dot-occupee"/>
+                        <Label text="Occupée" styleClass="legend-text"/>
+                    </HBox>
+                    <Region prefHeight="10"/>
+
+                    <Button text="⎋  Se déconnecter" onAction="#seDeconnecter"
+                            styleClass="btn-deconnexion" prefWidth="190"/>
+                </VBox>
+            </VBox>
+
+        </left>
+
+        <center>
+            <VBox styleClass="menu-panel" spacing="0">
+                <!-- Header menu -->
+                <HBox styleClass="menu-header" alignment="CENTER_LEFT" spacing="12">
+                    <Label text="Menu" styleClass="panel-title"/>
+                    <Label text="Sélectionnez les articles" styleClass="panel-subtitle"/>
+                </HBox>
+
+                <!-- Grille d'articles -->
+                <ScrollPane styleClass="menu-scroll" VBox.vgrow="ALWAYS" fitToWidth="true">
+                    <content>
+                        <FlowPane
+                                fx:id="conteneurArticles"
+                                styleClass="articles-container"
+                                hgap="14.0"
+                                vgap="14.0"
+                                prefWrapLength="420"/>
+                    </content>
+                </ScrollPane>
+            </VBox>
+        </center>
+
+        <right>
+            <VBox styleClass="order-panel" prefWidth="320.0" spacing="0">
+
+                <VBox styleClass="order-header" spacing="2">
+                    <Label text="Commande en cours" styleClass="order-title"/>
+                    <Label text="Détail de la table sélectionnée" styleClass="order-subtitle"/>
+                </VBox>
+
+                <VBox styleClass="table-wrapper" VBox.vgrow="ALWAYS">
+                    <TableView fx:id="tableCommande" styleClass="order-table" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="colArticle" prefWidth="110.0" text="Article"/>
+                            <TableColumn fx:id="colPrix" prefWidth="62.0" text="Prix U."/>
+                            <TableColumn fx:id="colQuantite" prefWidth="45.0" text="Qté"/>
+                            <TableColumn fx:id="colTotalLigne" prefWidth="75.0" text="Total"/>
+                        </columns>
+                        <placeholder>
+                            <Label text="Aucun article" styleClass="table-placeholder"/>
+                        </placeholder>
+                    </TableView>
+                </VBox>
+
+                <HBox styleClass="total-bar" alignment="CENTER_LEFT">
+                    <HBox HBox.hgrow="ALWAYS">
+                        <Label text="Total" styleClass="total-label-light"/>
+                    </HBox>
+                    <Label fx:id="labelTotal" text="0,00 Dt" styleClass="total-amount"/>
+                </HBox>
+
+                <VBox styleClass="action-buttons" spacing="10">
+
+                    <HBox spacing="10">
+                        <Button
+                                onAction="#exporterCSVAction"
+                                text="↓  CSV"
+                                styleClass="btn-export-csv"
+                                prefWidth="140" prefHeight="38"/>
+                        <Button
+                                onAction="#exporterPDFAction"
+                                text="↓  PDF"
+                                styleClass="btn-export-pdf"
+                                prefWidth="140" prefHeight="38"/>
+                    </HBox>
+
+                    <Button
+                            fx:id="btnSupprimer"
+                            onAction="#supprimerArticleAction"
+                            text="✕  Supprimer la ligne"
+                            styleClass="btn-supprimer"
+                            prefWidth="300" prefHeight="40"/>
+
+                    <Region prefHeight="4"/>
+
+                    <Button
+                            fx:id="btnValider"
+                            onAction="#validerCommandeAction"
+                            text="✓  Valider la commande"
+                            styleClass="btn-valider"
+                            prefWidth="300" prefHeight="46"/>
+
+                    <Button
+                            onAction="#libererTableAction"
+                            text="⊙  Libérer la table"
+                            styleClass="btn-liberer"
+                            prefWidth="300" prefHeight="40"/>
+                </VBox>
+            </VBox>
+        </right>
+    </BorderPane>
+</AnchorPane>

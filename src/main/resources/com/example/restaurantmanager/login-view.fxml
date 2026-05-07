@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<AnchorPane
+    prefHeight="520.0"
+    prefWidth="900.0"
+    stylesheets="@styles.css"
+    styleClass="login-root"
+    xmlns="http://javafx.com/javafx/17.0.12"
+    xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="com.example.restaurantmanager.Controller.LoginController">
+
+    <children>
+        <VBox
+            styleClass="login-branding"
+            alignment="CENTER"
+            prefWidth="460"
+            AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0">
+            <children>
+                <Label text="🍽" styleClass="login-brand-icon" />
+                <Label text="Restaurant" styleClass="login-brand-title" />
+                <Label text="Manager" styleClass="login-brand-subtitle" />
+                <Label text="Système de gestion tout-en-un" styleClass="login-brand-desc" />
+
+                <VBox spacing="16" styleClass="login-features">
+                    <Label text="✓  Gestion des tables en temps réel" styleClass="login-feature-item"/>
+                    <Label text="✓  Exports PDF et CSV automatiques" styleClass="login-feature-item"/>
+                    <Label text="✓  Dashboard gérant avec statistiques" styleClass="login-feature-item"/>
+                    <Label text="✓  Accès multi-rôles sécurisé" styleClass="login-feature-item"/>
+                </VBox>
+            </children>
+        </VBox>
+
+        <!-- Panneau droit : formulaire -->
+        <VBox
+            alignment="CENTER"
+            prefWidth="440"
+            AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0"
+            AnchorPane.rightAnchor="0"
+            styleClass="login-form-panel">
+            <children>
+
+                <VBox fx:id="panneauLogin" styleClass="login-card" spacing="0">
+                    <VBox styleClass="login-card-header" spacing="4">
+                        <Label text="Connexion" styleClass="login-card-title" />
+                        <Label text="Accédez à votre espace de travail" styleClass="login-card-subtitle" />
+                    </VBox>
+
+                    <VBox styleClass="login-card-body" spacing="18">
+                        <VBox spacing="6">
+                            <Label text="Identifiant" styleClass="login-field-label" />
+                            <TextField
+                                fx:id="champLogin"
+                                promptText="Entrez votre identifiant"
+                                styleClass="login-field" />
+                        </VBox>
+
+                        <VBox spacing="6">
+                            <Label text="Mot de passe" styleClass="login-field-label" />
+                            <PasswordField
+                                fx:id="champMotDePasse"
+                                promptText="••••••••"
+                                styleClass="login-field" />
+                        </VBox>
+
+                        <Label
+                            fx:id="labelErreur"
+                            text=""
+                            styleClass="login-error"
+                            wrapText="true" />
+
+                        <Button
+                            fx:id="btnConnexion"
+                            text="Se connecter"
+                            onAction="#seConnecter"
+                            styleClass="login-btn"
+                            prefWidth="320"
+                            prefHeight="46" />
+
+                        <VBox styleClass="login-hint" spacing="4">
+                            <Label text="Comptes de démonstration :" styleClass="login-hint-title"/>
+                            <Label text="admin / admin123  →  Gérant" styleClass="login-hint-text"/>
+                            <Label text="caissier1 / caisse123  →  Caissier" styleClass="login-hint-text"/>
+                        </VBox>
+                    </VBox>
+                </VBox>
+            </children>
+        </VBox>
+    </children>
+</AnchorPane>

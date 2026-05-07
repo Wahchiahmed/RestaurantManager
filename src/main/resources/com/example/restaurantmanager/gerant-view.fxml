@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<AnchorPane
+    prefHeight="750.0"
+    prefWidth="1200.0"
+    stylesheets="@styles.css"
+    styleClass="root-pane"
+    xmlns="http://javafx.com/javafx/17.0.12"
+    xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="com.example.restaurantmanager.Controller.GerantController">
+
+    <children>
+        <BorderPane AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0"
+                    AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
+
+            <left>
+                <VBox styleClass="sidebar" prefWidth="220">
+                    <VBox styleClass="sidebar-header" spacing="4">
+                        <Label text="🍽" styleClass="sidebar-icon"/>
+                        <Label text="Restaurant" styleClass="sidebar-title"/>
+                        <Label text="Manager" styleClass="sidebar-subtitle"/>
+                    </VBox>
+
+                    <VBox styleClass="sidebar-role-badge">
+                        <Label text="GÉRANT" styleClass="role-badge-gerant"/>
+                        <Label fx:id="labelNomGerant" text="Bonjour" styleClass="sidebar-username"/>
+                    </VBox>
+
+                    <VBox styleClass="sidebar-nav" VBox.vgrow="ALWAYS" spacing="4">
+                        <Label text="▪  NAVIGATION" styleClass="section-label"/>
+                    </VBox>
+
+                    <VBox styleClass="status-legend">
+                        <Button text="⎋  Se déconnecter" onAction="#seDeconnecter"
+                                styleClass="btn-deconnexion" prefWidth="196"/>
+                    </VBox>
+                </VBox>
+            </left>
+
+            <center>
+                <VBox styleClass="menu-panel">
+                    <HBox styleClass="menu-header" alignment="CENTER_LEFT" spacing="16">
+                        <Label text="Espace Gérant" styleClass="panel-title"/>
+                        <Label text="Tableau de bord &amp; administration" styleClass="panel-subtitle"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="↻  Actualiser" onAction="#actualiserDashboard"
+                                styleClass="btn-liberer" prefHeight="32"/>
+                    </HBox>
+
+                    <TabPane styleClass="gerant-tabs" VBox.vgrow="ALWAYS"
+                             tabClosingPolicy="UNAVAILABLE">
+
+                        <Tab text="📊  Dashboard">
+                            <ScrollPane fitToWidth="true" styleClass="menu-scroll">
+                                <content>
+                                    <VBox spacing="20" styleClass="articles-container">
+
+                                        <!-- KPI Cards -->
+                                        <Label text="Statistiques du jour" styleClass="section-heading"/>
+                                        <HBox spacing="16">
+                                            <VBox styleClass="kpi-card kpi-gold" HBox.hgrow="ALWAYS">
+                                                <Label text="Recette du jour" styleClass="kpi-label"/>
+                                                <Label fx:id="labelRecetteJour" text="0,00 Dt" styleClass="kpi-value"/>
+                                            </VBox>
+                                            <VBox styleClass="kpi-card kpi-blue" HBox.hgrow="ALWAYS">
+                                                <Label text="Commandes du jour" styleClass="kpi-label"/>
+                                                <Label fx:id="labelNbCommandes" text="0" styleClass="kpi-value"/>
+                                            </VBox>
+                                            <VBox styleClass="kpi-card kpi-green" HBox.hgrow="ALWAYS">
+                                                <Label text="Ticket moyen" styleClass="kpi-label"/>
+                                                <Label fx:id="labelTicketMoyen" text="0,00 Dt" styleClass="kpi-value"/>
+                                            </VBox>
+                                            <VBox styleClass="kpi-card kpi-red" HBox.hgrow="ALWAYS">
+                                                <Label text="Tables occupées" styleClass="kpi-label"/>
+                                                <Label fx:id="labelTablesOccupees" text="0 / 8" styleClass="kpi-value"/>
+                                            </VBox>
+                                        </HBox>
+
+                                        <HBox spacing="16">
+                                            <VBox styleClass="kpi-card-wide kpi-purple" HBox.hgrow="ALWAYS">
+                                                <Label text="Recette du mois" styleClass="kpi-label"/>
+                                                <Label fx:id="labelRecetteMois" text="0,00 Dt" styleClass="kpi-value-lg"/>
+                                            </VBox>
+                                        </HBox>
+
+                                        <Label text="Top 5 articles les plus vendus" styleClass="section-heading"/>
+                                        <VBox fx:id="conteneurTopArticles" styleClass="top-articles-card" spacing="10">
+                                            <Label text="Chargement..." styleClass="kpi-label"/>
+                                        </VBox>
+
+                                    </VBox>
+                                </content>
+                            </ScrollPane>
+                        </Tab>
+
+                        <Tab text="🍕  Gestion du Menu">
+                            <HBox spacing="0">
+
+                                <!-- Tableau articles -->
+                                <VBox styleClass="table-wrapper" HBox.hgrow="ALWAYS" spacing="10">
+                                    <Label text="Articles du menu" styleClass="section-heading"
+                                           style="-fx-padding: 16 0 6 0;"/>
+                                    <TableView fx:id="tableArticles" styleClass="order-table"
+                                               VBox.vgrow="ALWAYS">
+                                        <columns>
+                                            <TableColumn fx:id="colId"    text="ID"    prefWidth="45"/>
+                                            <TableColumn fx:id="colNom"   text="Nom"   prefWidth="180"/>
+                                            <TableColumn fx:id="colType"  text="Type"  prefWidth="90"/>
+                                            <TableColumn fx:id="colPrix"  text="Prix (Dt)" prefWidth="90"/>
+                                            <TableColumn fx:id="colStock" text="Stock" prefWidth="70"/>
+                                        </columns>
+                                        <placeholder>
+                                            <Label text="Aucun article" styleClass="table-placeholder"/>
+                                        </placeholder>
+                                    </TableView>
+                                </VBox>
+
+                                <VBox styleClass="order-panel" prefWidth="300" spacing="0">
+                                    <VBox styleClass="order-header">
+                                        <Label text="Ajouter / Modifier" styleClass="order-title"/>
+                                        <Label text="un article du menu" styleClass="order-subtitle"/>
+                                    </VBox>
+
+                                    <VBox styleClass="action-buttons" spacing="14">
+                                        <VBox spacing="5">
+                                            <Label text="Nom du plat" styleClass="login-field-label"/>
+                                            <TextField fx:id="champNom" promptText="Ex: Pizza Regina"
+                                                       styleClass="login-field"/>
+                                        </VBox>
+                                        <VBox spacing="5">
+                                            <Label text="Catégorie" styleClass="login-field-label"/>
+                                            <ComboBox fx:id="comboType" prefWidth="276"
+                                                      styleClass="login-field"/>
+                                        </VBox>
+                                        <VBox spacing="5">
+                                            <Label text="Prix (Dt)" styleClass="login-field-label"/>
+                                            <TextField fx:id="champPrix" promptText="Ex: 12.50"
+                                                       styleClass="login-field"/>
+                                        </VBox>
+                                        <VBox spacing="5">
+                                            <Label text="Stock" styleClass="login-field-label"/>
+                                            <TextField fx:id="champStock" promptText="Ex: 50"
+                                                       styleClass="login-field"/>
+                                        </VBox>
+
+                                        <Label fx:id="labelFormErreur" text="" wrapText="true"
+                                               styleClass="login-error"/>
+
+                                        <Button text="+ Ajouter" onAction="#ajouterArticle"
+                                                styleClass="btn-valider" prefWidth="276" prefHeight="40"/>
+                                        <HBox spacing="10">
+                                            <Button fx:id="btnModifier" text="✎ Modifier"
+                                                    onAction="#modifierArticle"
+                                                    styleClass="btn-export-pdf"
+                                                    prefWidth="133" prefHeight="36"
+                                                    disable="true"/>
+                                            <Button fx:id="btnSupprimer" text="✕ Supprimer"
+                                                    onAction="#supprimerArticle"
+                                                    styleClass="btn-supprimer"
+                                                    prefWidth="133" prefHeight="36"
+                                                    disable="true"/>
+                                        </HBox>
+                                    </VBox>
+                                </VBox>
+                            </HBox>
+                        </Tab>
+
+                        <Tab text="👥  Gestion du Personnel">
+                            <HBox spacing="0">
+
+                                <VBox styleClass="table-wrapper" HBox.hgrow="ALWAYS" spacing="10">
+                                    <Label text="Comptes employés" styleClass="section-heading"
+                                           style="-fx-padding: 16 0 6 0;"/>
+                                    <TableView fx:id="tableStaff" styleClass="order-table"
+                                               VBox.vgrow="ALWAYS">
+                                        <columns>
+                                            <TableColumn fx:id="colStaffNom"    text="Nom"     prefWidth="160"/>
+                                            <TableColumn fx:id="colStaffLogin"  text="Login"   prefWidth="120"/>
+                                            <TableColumn fx:id="colStaffRole"   text="Rôle"    prefWidth="90"/>
+                                            <TableColumn fx:id="colStaffStatut" text="Statut"  prefWidth="80"/>
+                                        </columns>
+                                        <placeholder>
+                                            <Label text="Aucun employé" styleClass="table-placeholder"/>
+                                        </placeholder>
+                                    </TableView>
+
+                                    <HBox spacing="10">
+                                        <Button text="⊙  Activer / Désactiver"
+                                                onAction="#toggleActivationStaff"
+                                                styleClass="btn-export-csv" prefHeight="36"/>
+                                        <Button text="✕  Supprimer"
+                                                onAction="#supprimerStaff"
+                                                styleClass="btn-supprimer" prefHeight="36"/>
+                                    </HBox>
+                                </VBox>
+
+                                <VBox styleClass="order-panel" prefWidth="300" spacing="0">
+                                    <VBox styleClass="order-header">
+                                        <Label text="Créer un compte" styleClass="order-title"/>
+                                        <Label text="Nouvel employé" styleClass="order-subtitle"/>
+                                    </VBox>
+
+                                    <VBox styleClass="action-buttons" spacing="14">
+                                        <VBox spacing="5">
+                                            <Label text="Nom complet" styleClass="login-field-label"/>
+                                            <TextField fx:id="champStaffNom" promptText="Ex: Jean Dupont"
+                                                       styleClass="login-field"/>
+                                        </VBox>
+                                        <VBox spacing="5">
+                                            <Label text="Login" styleClass="login-field-label"/>
+                                            <TextField fx:id="champStaffLogin" promptText="Ex: jean.d"
+                                                       styleClass="login-field"/>
+                                        </VBox>
+                                        <VBox spacing="5">
+                                            <Label text="Mot de passe" styleClass="login-field-label"/>
+                                            <PasswordField fx:id="champStaffMdp" promptText="••••••••"
+                                                           styleClass="login-field"/>
+                                        </VBox>
+                                        <VBox spacing="5">
+                                            <Label text="Rôle" styleClass="login-field-label"/>
+                                            <ComboBox fx:id="comboStaffRole" prefWidth="276"
+                                                      styleClass="login-field"/>
+                                        </VBox>
+
+                                        <Button text="+ Créer le compte" onAction="#ajouterStaff"
+                                                styleClass="btn-valider" prefWidth="276" prefHeight="40"/>
+                                    </VBox>
+                                </VBox>
+                            </HBox>
+                        </Tab>
+
+                    </TabPane>
+                </VBox>
+            </center>
+        </BorderPane>
+    </children>
+</AnchorPane>

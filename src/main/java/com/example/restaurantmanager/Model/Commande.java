@@ -5,21 +5,38 @@ import java.util.List;
 
 public class Commande {
     private int id;
-    private List<Article> articles;
-    private double totalAddition;
+    private List<LigneCommande> lignes;
 
     public Commande(int id) {
         this.id = id;
-        this.articles = new ArrayList<>();
-        this.totalAddition = 0.0;
+        this.lignes = new ArrayList<>();
     }
 
     public void ajouterArticle(Article article) {
-        this.articles.add(article);
-        this.totalAddition += article.getPrix();
+        // On cherche si l'article existe déjà dans la commande
+        for (LigneCommande ligne : lignes) {
+            if (ligne.getArticle().getId() == article.getId()) {
+                ligne.ajouterUn(); // Si oui, on augmente juste la quantité
+                return;
+            }
+        }
+        // Si non, on crée une nouvelle ligne avec une quantité de 1
+        lignes.add(new LigneCommande(article, 1));
     }
 
-    public int getId() { return id; }
-    public List<Article> getArticles() { return articles; }
-    public double getTotalAddition() { return totalAddition; }
+    public void supprimerLigne(LigneCommande ligne) {
+        lignes.remove(ligne);
+    }
+
+    public double getTotalAddition() {
+        double total = 0;
+        for (LigneCommande ligne : lignes) {
+            total += ligne.getSousTotal();
+        }
+        return total;
+    }
+
+    public List<LigneCommande> getLignes() {
+        return lignes;
+    }
 }

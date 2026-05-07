@@ -10,4 +10,8 @@ public class Plat extends Article {
     public String getDescription() {
         return "Plat : " + this.nom + " (" + this.prix + " Dt)";
     }
+    @Override
+    public String getType() {
+        return "PLAT";
+    }
 }

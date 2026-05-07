@@ -11,4 +11,8 @@ public class Boisson extends Article {
     public String getDescription() {
         return "Boisson : " + this.nom + " (" + this.prix + " Dt)";
     }
+    @Override
+    public String getType() {
+        return "BOISSON";
+    }
 }
