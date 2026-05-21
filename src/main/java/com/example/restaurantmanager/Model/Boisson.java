@@ -13,6 +13,6 @@ public class Boisson extends Article {
     }
     @Override
     public String getType() {
-        return "BOISSON";
+        return "BOISSON     ";
     }
 }

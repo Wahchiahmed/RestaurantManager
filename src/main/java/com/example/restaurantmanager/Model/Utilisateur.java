@@ -25,7 +25,6 @@ public class Utilisateur {
         this.actif = actif;
     }
 
-    // ── Getters ──
     public int getId()                              { return id; }
     public String getNom()                          { return nom; }
     public String getLogin()                        { return login; }
@@ -35,7 +34,6 @@ public class Utilisateur {
     public LocalDateTime getDateCreation()          { return dateCreation; }
     public LocalDateTime getDerniereConnexion()     { return derniereConnexion; }
 
-    // ── Setters ──
     public void setId(int id)                                           { this.id = id; }
     public void setNom(String nom)                                      { this.nom = nom; }
     public void setLogin(String login)                                  { this.login = login; }

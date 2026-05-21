@@ -3,6 +3,7 @@ package com.example.restaurantmanager.Controller;
 import com.example.restaurantmanager.DAO.ArticleDAO;
 import com.example.restaurantmanager.DAO.GerantDAO;
 import com.example.restaurantmanager.DAO.UtilisateurDAO;
+import com.example.restaurantmanager.Exception.*;
 import com.example.restaurantmanager.Model.Article;
 import com.example.restaurantmanager.Model.Utilisateur;
 import com.example.restaurantmanager.Utils.Session;
@@ -22,47 +23,52 @@ import java.util.Map;
 
 public class GerantController {
 
+    // ── FXML Fields ──────────────────────────────────────────────────────────
     @FXML private Label labelNomGerant;
     @FXML private Label labelRecetteJour;
     @FXML private Label labelNbCommandes;
     @FXML private Label labelTicketMoyen;
     @FXML private Label labelTablesOccupees;
     @FXML private Label labelRecetteMois;
-
     @FXML private VBox  conteneurTopArticles;
 
-    @FXML private TableView<Article>           tableArticles;
+    @FXML private TableView<Article>            tableArticles;
     @FXML private TableColumn<Article, Integer> colId;
     @FXML private TableColumn<Article, String>  colNom;
     @FXML private TableColumn<Article, String>  colType;
     @FXML private TableColumn<Article, Double>  colPrix;
     @FXML private TableColumn<Article, Integer> colStock;
 
-    @FXML private TextField   champNom;
+    @FXML private TextField        champNom;
     @FXML private ComboBox<String> comboType;
-    @FXML private TextField   champPrix;
-    @FXML private TextField   champStock;
-    @FXML private Button      btnAjouter;
-    @FXML private Button      btnModifier;
-    @FXML private Button      btnSupprimer;
-    @FXML private Label       labelFormErreur;
+    @FXML private TextField        champPrix;
+    @FXML private TextField        champStock;
+    @FXML private Button           btnAjouter;
+    @FXML private Button           btnModifier;
+    @FXML private Button           btnSupprimer;
+    @FXML private Label            labelFormErreur;
 
-    @FXML private TableView<Utilisateur>              tableStaff;
-    @FXML private TableColumn<Utilisateur, String>    colStaffNom;
-    @FXML private TableColumn<Utilisateur, String>    colStaffLogin;
-    @FXML private TableColumn<Utilisateur, String>    colStaffRole;
-    @FXML private TableColumn<Utilisateur, String>    colStaffStatut;
+    @FXML private TableView<Utilisateur>           tableStaff;
+    @FXML private TableColumn<Utilisateur, String> colStaffNom;
+    @FXML private TableColumn<Utilisateur, String> colStaffLogin;
+    @FXML private TableColumn<Utilisateur, String> colStaffRole;
+    @FXML private TableColumn<Utilisateur, String> colStaffStatut;
 
-    @FXML private TextField   champStaffNom;
-    @FXML private TextField   champStaffLogin;
-    @FXML private PasswordField champStaffMdp;
+    @FXML private TextField        champStaffNom;
+    @FXML private TextField        champStaffLogin;
+    @FXML private PasswordField    champStaffMdp;
     @FXML private ComboBox<String> comboStaffRole;
 
+    // ── DAOs ─────────────────────────────────────────────────────────────────
     private final GerantDAO      gerantDAO      = new GerantDAO();
     private final ArticleDAO     articleDAO     = new ArticleDAO();
     private final UtilisateurDAO utilisateurDAO = new UtilisateurDAO();
 
     private Article articleSelectionne = null;
+
+    // =========================================================================
+    // INITIALISATION
+    // =========================================================================
 
     @FXML
     public void initialize() {
@@ -75,47 +81,75 @@ public class GerantController {
         configurerTableStaff();
         chargerStaff();
 
-        comboType.setItems(FXCollections.observableArrayList("PLAT", "BOISSON", "DESSERT", "ENTREE"));
+        comboType.setItems(FXCollections.observableArrayList(
+                "PLAT", "BOISSON", "DESSERT", "ENTREE"));
         comboType.getSelectionModel().selectFirst();
 
         comboStaffRole.setItems(FXCollections.observableArrayList("CAISSIER", "GERANT"));
         comboStaffRole.getSelectionModel().selectFirst();
 
-        tableArticles.getSelectionModel().selectedItemProperty().addListener((obs, old, sel) -> {
-            articleSelectionne = sel;
-            if (sel != null) {
-                champNom.setText(sel.getNom());
-                champPrix.setText(String.valueOf(sel.getPrix()));
-                champStock.setText(String.valueOf(sel.getQuantiteStock()));
-                btnModifier.setDisable(false);
-                btnSupprimer.setDisable(false);
-            } else {
-                viderFormulaire();
-            }
-        });
+        tableArticles.getSelectionModel().selectedItemProperty()
+                .addListener((obs, old, sel) -> {
+                    articleSelectionne = sel;
+                    if (sel != null) {
+                        champNom.setText(sel.getNom());
+                        champPrix.setText(String.valueOf(sel.getPrix()));
+                        champStock.setText(String.valueOf(sel.getQuantiteStock()));
+                        btnModifier.setDisable(false);
+                        btnSupprimer.setDisable(false);
+                    } else {
+                        viderFormulaire();
+                    }
+                });
     }
 
-    private void chargerDashboard() {
-        labelRecetteJour.setText(String.format("%.2f Dt", gerantDAO.getRecetteJour()));
-        labelNbCommandes.setText(String.valueOf(gerantDAO.getNbCommandesJour()));
-        labelTicketMoyen.setText(String.format("%.2f Dt", gerantDAO.getTicketMoyenJour()));
-        labelTablesOccupees.setText(gerantDAO.getNbTablesOccupees() + " / 8");
-        labelRecetteMois.setText(String.format("%.2f Dt", gerantDAO.getRecetteMois()));
+    // =========================================================================
+    // DASHBOARD
+    // =========================================================================
 
-        // Top articles
-        conteneurTopArticles.getChildren().clear();
-        Map<String, Integer> top = gerantDAO.getTopArticles();
-        int rang = 1;
-        for (Map.Entry<String, Integer> e : top.entrySet()) {
-            Label l = new Label(rang + ".  " + e.getKey() + "  —  " + e.getValue() + " vendus");
-            l.getStyleClass().add("top-article-item");
-            conteneurTopArticles.getChildren().add(l);
-            rang++;
+    private void chargerDashboard() {
+        try {
+            labelRecetteJour.setText(
+                    String.format("%.2f Dt", gerantDAO.getRecetteJour()));
+            labelNbCommandes.setText(
+                    String.valueOf(gerantDAO.getNbCommandesJour()));
+            labelTicketMoyen.setText(
+                    String.format("%.2f Dt", gerantDAO.getTicketMoyenJour()));
+            labelTablesOccupees.setText(
+                    gerantDAO.getNbTablesOccupees() + " / 8");
+            labelRecetteMois.setText(
+                    String.format("%.2f Dt", gerantDAO.getRecetteMois()));
+
+            conteneurTopArticles.getChildren().clear();
+            Map<String, Integer> top = gerantDAO.getTopArticles();
+            int rang = 1;
+            for (Map.Entry<String, Integer> e : top.entrySet()) {
+                Label l = new Label(
+                        rang + ".  " + e.getKey()
+                                + "  —  " + e.getValue() + " vendus");
+                l.getStyleClass().add("top-article-item");
+                conteneurTopArticles.getChildren().add(l);
+                rang++;
+            }
+
+        } catch (ConnexionException e) {
+            alerte("Erreur de connexion",
+                    "Impossible de charger le tableau de bord.\n" + e.getMessage());
+
+        } catch (ArticleDAOException e) {
+            alerte("Erreur BDD",
+                    "Erreur lors du chargement des statistiques.\n" + e.getMessage());
         }
     }
 
     @FXML
-    void actualiserDashboard() { chargerDashboard(); }
+    void actualiserDashboard() {
+        chargerDashboard();
+    }
+
+    // =========================================================================
+    // GESTION DES ARTICLES
+    // =========================================================================
 
     private void configurerTableArticles() {
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
@@ -126,29 +160,50 @@ public class GerantController {
     }
 
     private void chargerArticles() {
-        List<Article> articles = articleDAO.getAllArticles();
-        tableArticles.setItems(FXCollections.observableArrayList(articles));
+        try {
+            List<Article> articles = articleDAO.getAllArticles();
+            tableArticles.setItems(FXCollections.observableArrayList(articles));
+
+        } catch (ConnexionException e) {
+            afficherErreurFormulaire(
+                    "Connexion BDD impossible : " + e.getMessage());
+
+        } catch (ArticleInvalideException e) {
+            afficherErreurFormulaire(
+                    "Donnée invalide en BDD : " + e.getMessage());
+
+        } catch (ArticleDAOException e) {
+            afficherErreurFormulaire(
+                    "Erreur lors du chargement des articles : " + e.getMessage());
+        }
     }
 
     @FXML
     void ajouterArticle() {
         if (!validerFormulaire()) return;
 
-        boolean ok = gerantDAO.ajouterArticle(
-                champNom.getText().trim(),
-                comboType.getValue(),
-                Double.parseDouble(champPrix.getText().trim()),
-                Integer.parseInt(champStock.getText().trim())
-        );
-
-        if (ok) {
+        try {
+            gerantDAO.ajouterArticle(
+                    champNom.getText().trim(),
+                    comboType.getValue(),
+                    Double.parseDouble(champPrix.getText().trim()),
+                    Integer.parseInt(champStock.getText().trim())
+            );
             chargerArticles();
             viderFormulaire();
-            labelFormErreur.setText("✓ Article ajouté avec succès.");
-            labelFormErreur.setStyle("-fx-text-fill: #2ecc71;");
-            labelFormErreur.setVisible(true);
-        } else {
-            afficherErreurFormulaire("Erreur lors de l'ajout.");
+            afficherSuccesFormulaire("Article ajouté avec succès.");
+
+        } catch (ArticleInvalideException e) {
+            // Validation métier côté DAO (prix négatif, nom vide…)
+            afficherErreurFormulaire("Donnée invalide : " + e.getMessage());
+
+        } catch (ConnexionException e) {
+            afficherErreurFormulaire(
+                    "Connexion BDD impossible : " + e.getMessage());
+
+        } catch (ArticleDAOException e) {
+            afficherErreurFormulaire(
+                    "Erreur lors de l'ajout : " + e.getMessage());
         }
     }
 
@@ -156,22 +211,28 @@ public class GerantController {
     void modifierArticle() {
         if (articleSelectionne == null || !validerFormulaire()) return;
 
-        boolean ok = gerantDAO.modifierArticle(
-                articleSelectionne.getId(),
-                champNom.getText().trim(),
-                comboType.getValue(),
-                Double.parseDouble(champPrix.getText().trim()),
-                Integer.parseInt(champStock.getText().trim())
-        );
-
-        if (ok) {
+        try {
+            gerantDAO.modifierArticle(
+                    articleSelectionne.getId(),
+                    champNom.getText().trim(),
+                    comboType.getValue(),
+                    Double.parseDouble(champPrix.getText().trim()),
+                    Integer.parseInt(champStock.getText().trim())
+            );
             chargerArticles();
             viderFormulaire();
-            labelFormErreur.setText("✓ Article modifié.");
-            labelFormErreur.setStyle("-fx-text-fill: #2ecc71;");
-            labelFormErreur.setVisible(true);
-        } else {
-            afficherErreurFormulaire("Erreur lors de la modification.");
+            afficherSuccesFormulaire("Article modifié.");
+
+        } catch (ArticleInvalideException e) {
+            afficherErreurFormulaire("Donnée invalide : " + e.getMessage());
+
+        } catch (ConnexionException e) {
+            afficherErreurFormulaire(
+                    "Connexion BDD impossible : " + e.getMessage());
+
+        } catch (ArticleDAOException e) {
+            afficherErreurFormulaire(
+                    "Erreur lors de la modification : " + e.getMessage());
         }
     }
 
@@ -182,37 +243,71 @@ public class GerantController {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Confirmation");
         confirm.setHeaderText(null);
-        confirm.setContentText("Supprimer « " + articleSelectionne.getNom() + " » du menu ?");
+        confirm.setContentText(
+                "Supprimer « " + articleSelectionne.getNom() + " » du menu ?");
 
         confirm.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-                boolean ok = gerantDAO.supprimerArticle(articleSelectionne.getId());
-                if (ok) {
+                try {
+                    gerantDAO.supprimerArticle(articleSelectionne.getId());
                     chargerArticles();
                     viderFormulaire();
+
+                } catch (ConnexionException e) {
+                    afficherErreurFormulaire(
+                            "Connexion BDD impossible : " + e.getMessage());
+
+                } catch (ArticleDAOException e) {
+                    afficherErreurFormulaire(
+                            "Erreur lors de la suppression : " + e.getMessage());
                 }
             }
         });
     }
 
+    // =========================================================================
+    // FORMULAIRE ARTICLES — utilitaires
+    // =========================================================================
+
     private boolean validerFormulaire() {
         labelFormErreur.setVisible(false);
+
         if (champNom.getText().trim().isEmpty()) {
             afficherErreurFormulaire("Le nom est obligatoire.");
             return false;
         }
-        try { Double.parseDouble(champPrix.getText().trim()); }
-        catch (NumberFormatException e) { afficherErreurFormulaire("Prix invalide."); return false; }
-
-        try { Integer.parseInt(champStock.getText().trim()); }
-        catch (NumberFormatException e) { afficherErreurFormulaire("Stock invalide."); return false; }
-
+        try {
+            double prix = Double.parseDouble(champPrix.getText().trim());
+            if (prix < 0) {
+                afficherErreurFormulaire("Le prix ne peut pas être négatif.");
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            afficherErreurFormulaire("Prix invalide.");
+            return false;
+        }
+        try {
+            int stock = Integer.parseInt(champStock.getText().trim());
+            if (stock < 0) {
+                afficherErreurFormulaire("Le stock ne peut pas être négatif.");
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            afficherErreurFormulaire("Stock invalide.");
+            return false;
+        }
         return true;
     }
 
     private void afficherErreurFormulaire(String msg) {
         labelFormErreur.setText("✗ " + msg);
         labelFormErreur.setStyle("-fx-text-fill: #e94560;");
+        labelFormErreur.setVisible(true);
+    }
+
+    private void afficherSuccesFormulaire(String msg) {
+        labelFormErreur.setText("✓ " + msg);
+        labelFormErreur.setStyle("-fx-text-fill: #2ecc71;");
         labelFormErreur.setVisible(true);
     }
 
@@ -228,17 +323,33 @@ public class GerantController {
         labelFormErreur.setVisible(false);
     }
 
+    // =========================================================================
+    // GESTION DU STAFF
+    // =========================================================================
+
     private void configurerTableStaff() {
         colStaffNom.setCellValueFactory(new PropertyValueFactory<>("nom"));
         colStaffLogin.setCellValueFactory(new PropertyValueFactory<>("login"));
         colStaffRole.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getRole().name()));
         colStaffStatut.setCellValueFactory(data ->
-                new SimpleStringProperty(data.getValue().isActif() ? "Actif" : "Désactivé"));
+                new SimpleStringProperty(
+                        data.getValue().isActif() ? "Actif" : "Désactivé"));
     }
 
     private void chargerStaff() {
-        tableStaff.setItems(FXCollections.observableArrayList(utilisateurDAO.getAllUtilisateurs()));
+        try {
+            tableStaff.setItems(FXCollections.observableArrayList(
+                    utilisateurDAO.getAllUtilisateurs()));
+
+        } catch (ConnexionException e) {
+            alerte("Erreur de connexion",
+                    "Impossible de charger le personnel.\n" + e.getMessage());
+
+        } catch (UtilisateurDAOException e) {
+            alerte("Erreur BDD",
+                    "Erreur lors du chargement du personnel.\n" + e.getMessage());
+        }
     }
 
     @FXML
@@ -253,61 +364,98 @@ public class GerantController {
             return;
         }
 
-        boolean ok = utilisateurDAO.creerUtilisateur(nom, login, mdp,
-                Utilisateur.Role.valueOf(role));
-        if (ok) {
+        try {
+            utilisateurDAO.creerUtilisateur(
+                    nom, login, mdp, Utilisateur.Role.valueOf(role));
             chargerStaff();
             champStaffNom.clear();
             champStaffLogin.clear();
             champStaffMdp.clear();
             alerte("Succès", "Compte créé avec succès.");
-        } else {
-            alerte("Erreur", "Login déjà utilisé ou erreur base de données.");
+
+        } catch (ConnexionException e) {
+            alerte("Erreur de connexion",
+                    "Impossible de créer le compte.\n" + e.getMessage());
+
+        } catch (UtilisateurDAOException e) {
+            // Message déjà précis (ex : login déjà utilisé)
+            alerte("Erreur", e.getMessage());
         }
     }
 
     @FXML
     void toggleActivationStaff() {
         Utilisateur sel = tableStaff.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerte("Avertissement", "Sélectionnez un employé."); return; }
+        if (sel == null) {
+            alerte("Avertissement", "Sélectionnez un employé.");
+            return;
+        }
 
-        boolean nouvelEtat = !sel.isActif();
-        if (utilisateurDAO.toggleActif(sel.getId(), nouvelEtat)) {
+        try {
+            utilisateurDAO.toggleActif(sel.getId(), !sel.isActif());
             chargerStaff();
+
+        } catch (ConnexionException e) {
+            alerte("Erreur de connexion",
+                    "Impossible de modifier le statut.\n" + e.getMessage());
+
+        } catch (UtilisateurDAOException e) {
+            alerte("Erreur BDD", e.getMessage());
         }
     }
 
     @FXML
     void supprimerStaff() {
         Utilisateur sel = tableStaff.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerte("Avertissement", "Sélectionnez un employé."); return; }
+        if (sel == null) {
+            alerte("Avertissement", "Sélectionnez un employé.");
+            return;
+        }
 
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Confirmation");
         confirm.setHeaderText(null);
-        confirm.setContentText("Supprimer le compte de « " + sel.getNom() + " » ?");
+        confirm.setContentText(
+                "Supprimer le compte de « " + sel.getNom() + " » ?");
+
         confirm.showAndWait().ifPresent(r -> {
-            if (r == ButtonType.OK && utilisateurDAO.supprimerUtilisateur(sel.getId())) {
-                chargerStaff();
+            if (r == ButtonType.OK) {
+                try {
+                    utilisateurDAO.supprimerUtilisateur(sel.getId());
+                    chargerStaff();
+
+                } catch (ConnexionException e) {
+                    alerte("Erreur de connexion",
+                            "Impossible de supprimer le compte.\n" + e.getMessage());
+
+                } catch (UtilisateurDAOException e) {
+                    alerte("Erreur BDD", e.getMessage());
+                }
             }
         });
     }
+
+    // =========================================================================
+    // DÉCONNEXION & UTILITAIRES
+    // =========================================================================
 
     @FXML
     void seDeconnecter() {
         Session.getInstance().fermer();
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/example/restaurantmanager/login-view.fxml"));
-            Parent root = loader.load();
-            Stage stage = (Stage) labelNomGerant.getScene().getWindow();
-            Scene scene = new Scene(root);
-            scene.getStylesheets().add(
-                    getClass().getResource("/com/example/restaurantmanager/styles.css").toExternalForm());
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/com/example/restaurantmanager/login-view.fxml"));
+            Parent root  = loader.load();
+            Stage  stage = (Stage) labelNomGerant.getScene().getWindow();
+            Scene  scene = new Scene(root);
+            scene.getStylesheets().add(getClass()
+                    .getResource("/com/example/restaurantmanager/styles.css")
+                    .toExternalForm());
             stage.setWidth(900);
             stage.setHeight(520);
             stage.centerOnScreen();
             stage.setScene(scene);
+
         } catch (Exception e) {
             alerte("Erreur", "Impossible de retourner à la page de connexion.");
         }

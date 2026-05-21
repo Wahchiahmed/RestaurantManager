@@ -1,5 +1,7 @@
 package com.example.restaurantmanager.Utils;
 
+import com.example.restaurantmanager.Exception.ConnexionException;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -17,6 +19,8 @@ public class TestConnexion {
             System.err.println("Erreur : Impossible de se connecter à la base de données.");
             System.err.println("Détail de l'erreur : " + e.getMessage());
             e.printStackTrace();
+        } catch (ConnexionException e) {
+            throw new RuntimeException(e);
         }
     }
 }

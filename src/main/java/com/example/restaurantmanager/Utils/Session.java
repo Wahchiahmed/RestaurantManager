@@ -2,11 +2,6 @@ package com.example.restaurantmanager.Utils;
 
 import com.example.restaurantmanager.Model.Utilisateur;
 
-/**
- * Singleton léger — conserve l'utilisateur connecté pendant toute la session.
- * Appeler Session.getInstance().setUtilisateur(u) après login,
- * et Session.getInstance().getUtilisateur() depuis n'importe quel controller.
- */
 public class Session {
 
     private static Session instance;

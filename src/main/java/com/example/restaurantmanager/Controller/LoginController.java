@@ -1,9 +1,14 @@
 package com.example.restaurantmanager.Controller;
 
 import com.example.restaurantmanager.DAO.UtilisateurDAO;
+import com.example.restaurantmanager.Exception.CompteDesactiveException;
+import com.example.restaurantmanager.Exception.ConnexionException;
+import com.example.restaurantmanager.Exception.LoginInvalideException;
+import com.example.restaurantmanager.Exception.UtilisateurDAOException;
 import com.example.restaurantmanager.Model.Utilisateur;
 import com.example.restaurantmanager.Utils.Session;
 import javafx.animation.FadeTransition;
+import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -23,43 +28,86 @@ public class LoginController {
 
     private final UtilisateurDAO utilisateurDAO = new UtilisateurDAO();
 
+    // =========================================================================
+    // INITIALISATION
+    // =========================================================================
+
     @FXML
     public void initialize() {
         labelErreur.setVisible(false);
-        // Permettre connexion avec Entrée
-        champMotDePasse.setOnAction(e -> seConnecter());
         champLogin.setOnAction(e -> champMotDePasse.requestFocus());
+        champMotDePasse.setOnAction(e -> seConnecter());
     }
+
+    // =========================================================================
+    // CONNEXION
+    // =========================================================================
 
     @FXML
     void seConnecter() {
         String login = champLogin.getText().trim();
         String mdp   = champMotDePasse.getText();
 
+        // ── Validation des champs vides ────────────────────────────────────
         if (login.isEmpty() || mdp.isEmpty()) {
             afficherErreur("Veuillez remplir tous les champs.");
-            return;
-        }
-
-        btnConnexion.setDisable(true);
-        btnConnexion.setText("Connexion...");
-
-        Utilisateur u = utilisateurDAO.authentifier(login, mdp);
-
-        if (u == null) {
-            afficherErreur("Identifiants incorrects ou compte désactivé.");
-            btnConnexion.setDisable(false);
-            btnConnexion.setText("Se connecter");
             agiterChamp();
             return;
         }
 
-        // Stocker la session
-        Session.getInstance().setUtilisateur(u);
+        // ── Désactivation du bouton pendant la tentative ───────────────────
+        btnConnexion.setDisable(true);
+        btnConnexion.setText("Connexion...");
+        labelErreur.setVisible(false);
 
-        // Rediriger selon le rôle
         try {
-            String fxml = u.isGerant() ? "/com/example/restaurantmanager/gerant-view.fxml"
+            // ── Tentative d'authentification ───────────────────────────────
+            Utilisateur u = utilisateurDAO.authentifier(login, mdp);
+
+            // Succès : stocker la session et naviguer
+            Session.getInstance().setUtilisateur(u);
+            naviguerVersInterface(u);
+
+        } catch (LoginInvalideException e) {
+            // Login introuvable ou mot de passe incorrect
+            afficherErreur("Identifiants incorrects.");
+            reinitialiserBouton();
+            agiterChamp();
+            champMotDePasse.clear();
+            champMotDePasse.requestFocus();
+
+        } catch (CompteDesactiveException e) {
+            // Le compte existe mais est désactivé
+            afficherErreur(e.getMessage());
+            reinitialiserBouton();
+            agiterChamp();
+
+        } catch (ConnexionException e) {
+            // La BDD est inaccessible
+            afficherErreur("Impossible de joindre le serveur. Réessayez plus tard.");
+            reinitialiserBouton();
+
+        } catch (UtilisateurDAOException e) {
+            // Erreur SQL inattendue
+            afficherErreur("Erreur technique lors de la connexion.");
+            reinitialiserBouton();
+            // Log pour le développeur
+            System.err.println("[LoginController] Erreur DAO : " + e.getMessage());
+        }
+    }
+
+    // =========================================================================
+    // NAVIGATION
+    // =========================================================================
+
+    /**
+     * Redirige l'utilisateur vers son interface selon son rôle,
+     * avec une animation de fondu.
+     */
+    private void naviguerVersInterface(Utilisateur u) {
+        try {
+            String fxml = u.isGerant()
+                    ? "/com/example/restaurantmanager/gerant-view.fxml"
                     : "/com/example/restaurantmanager/MainView.fxml";
 
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
@@ -67,12 +115,11 @@ public class LoginController {
 
             Stage stage = (Stage) btnConnexion.getScene().getWindow();
             Scene scene = new Scene(root);
-            scene.getStylesheets().add(
-                    getClass().getResource("/com/example/restaurantmanager/styles.css").toExternalForm());
+            scene.getStylesheets().add(getClass()
+                    .getResource("/com/example/restaurantmanager/styles.css")
+                    .toExternalForm());
 
-            // Animation de transition
-            root.setOpacity(0);
-            stage.setScene(scene);
+            // Taille de la fenêtre selon le rôle
             if (u.isGerant()) {
                 stage.setWidth(1200);
                 stage.setHeight(750);
@@ -82,33 +129,49 @@ public class LoginController {
             }
             stage.centerOnScreen();
 
+            // Animation de fondu
+            root.setOpacity(0);
+            stage.setScene(scene);
+
             FadeTransition ft = new FadeTransition(Duration.millis(400), root);
             ft.setFromValue(0);
             ft.setToValue(1);
             ft.play();
 
-        }  catch (Exception e) {
-        // 1. Cette ligne imprime l'erreur complète dans la console IntelliJ
-        e.printStackTrace();
-
-        // 2. Affichage sur l'interface graphique
-        afficherErreur("Erreur de chargement de l'interface : " + e.getMessage());
-
-        // 3. Réactivation du bouton
-        btnConnexion.setDisable(false);
-        btnConnexion.setText("Se connecter");
-    }
+        } catch (Exception e) {
+            // Erreur de chargement FXML (ne devrait pas arriver en production)
+            e.printStackTrace();
+            afficherErreur("Erreur de chargement de l'interface : " + e.getMessage());
+            reinitialiserBouton();
+        }
     }
 
+    // =========================================================================
+    // UTILITAIRES UI
+    // =========================================================================
+
+    /**
+     * Affiche un message d'erreur en rouge sous le formulaire.
+     */
     private void afficherErreur(String message) {
-        labelErreur.setText(message);
+        labelErreur.setText("✗  " + message);
         labelErreur.setVisible(true);
     }
 
+    /**
+     * Réactive le bouton de connexion après un échec.
+     */
+    private void reinitialiserBouton() {
+        btnConnexion.setDisable(false);
+        btnConnexion.setText("Se connecter");
+    }
+
+    /**
+     * Animation "shake" sur le panneau de login pour signaler une erreur.
+     */
     private void agiterChamp() {
-        // Animation shake sur le panneau login
-        javafx.animation.TranslateTransition shake =
-                new javafx.animation.TranslateTransition(Duration.millis(60), panneauLogin);
+        TranslateTransition shake =
+                new TranslateTransition(Duration.millis(60), panneauLogin);
         shake.setFromX(0);
         shake.setByX(10);
         shake.setCycleCount(4);

@@ -1,58 +1,101 @@
 package com.example.restaurantmanager.DAO;
 
+import com.example.restaurantmanager.Exception.CompteDesactiveException;
+import com.example.restaurantmanager.Exception.ConnexionException;
+import com.example.restaurantmanager.Exception.LoginInvalideException;
+import com.example.restaurantmanager.Exception.UtilisateurDAOException;
 import com.example.restaurantmanager.Model.Utilisateur;
 import com.example.restaurantmanager.Utils.DatabaseConnection;
 import com.example.restaurantmanager.Utils.HashUtil;
 
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UtilisateurDAO {
 
-    // ── Authentification ──────────────────────────────────────────────────────
-    public Utilisateur authentifier(String login, String motDePasse) {
-        String hash = HashUtil.sha256(motDePasse);
-        String sql  = "SELECT * FROM users WHERE login = ? AND mot_de_passe = ? AND actif = 1";
+
+    public Utilisateur authentifier(String login, String motDePasse)
+            throws LoginInvalideException,
+            CompteDesactiveException,
+            ConnexionException,
+            UtilisateurDAOException {
+
+
+        String sqlLogin = "SELECT * FROM users WHERE login = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sqlLogin)) {
 
             ps.setString(1, login);
-            ps.setString(2, hash);
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    Utilisateur u = mapRow(rs);
-                    mettreAJourDerniereConnexion(u.getId(), conn);
-                    return u;
+
+                if (!rs.next()) {
+                    throw new LoginInvalideException();
                 }
+
+                Utilisateur u = mapRow(rs);
+
+                String hashSaisi = HashUtil.sha256(motDePasse);
+                if (!hashSaisi.equals(u.getMotDePasse())) {
+                    throw new LoginInvalideException();
+
+                }
+
+                if (!u.isActif()) {
+                    throw new CompteDesactiveException(login);
+                }
+
+                mettreAJourDerniereConnexion(u.getId(), conn);
+                return u;
             }
+
+        } catch (ConnexionException | LoginInvalideException | CompteDesactiveException e) {
+            throw e;
+
         } catch (SQLException e) {
-            System.err.println("Erreur authentification : " + e.getMessage());
+            throw new UtilisateurDAOException(
+                    "Erreur SQL lors de l'authentification du login « "
+                            + login + " ».", e);
         }
-        return null;
     }
 
-    // ── CRUD ──────────────────────────────────────────────────────────────────
-    public List<Utilisateur> getAllUtilisateurs() {
+
+    public List<Utilisateur> getAllUtilisateurs()
+            throws ConnexionException, UtilisateurDAOException {
+
         List<Utilisateur> liste = new ArrayList<>();
         String sql = "SELECT * FROM users ORDER BY role, nom";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             Statement st   = conn.createStatement();
-             ResultSet rs   = st.executeQuery(sql)) {
+             Statement  st   = conn.createStatement();
+             ResultSet  rs   = st.executeQuery(sql)) {
 
-            while (rs.next()) liste.add(mapRow(rs));
+            while (rs.next()) {
+                liste.add(mapRow(rs));
+            }
+
+        } catch (ConnexionException e) {
+            throw e;
+
         } catch (SQLException e) {
-            System.err.println("Erreur chargement utilisateurs : " + e.getMessage());
+            throw new UtilisateurDAOException(
+                    "Erreur SQL lors du chargement des utilisateurs.", e);
         }
+
         return liste;
     }
 
-    public boolean creerUtilisateur(String nom, String login, String motDePasse, Utilisateur.Role role) {
-        String sql = "INSERT INTO users (nom, login, mot_de_passe, role) VALUES (?, ?, ?, ?)";
+
+    public void creerUtilisateur(String nom,
+                                 String login,
+                                 String motDePasse,
+                                 Utilisateur.Role role)
+            throws ConnexionException, UtilisateurDAOException {
+
+        String sql =
+                "INSERT INTO users (nom, login, mot_de_passe, role) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -61,49 +104,93 @@ public class UtilisateurDAO {
             ps.setString(2, login);
             ps.setString(3, HashUtil.sha256(motDePasse));
             ps.setString(4, role.name());
-            return ps.executeUpdate() > 0;
+
+            int lignesAffectees = ps.executeUpdate();
+            if (lignesAffectees == 0) {
+                throw new UtilisateurDAOException(
+                        "La création du compte « " + login
+                                + " » n'a affecté aucune ligne.");
+            }
+
+        } catch (ConnexionException e) {
+            throw e;
 
         } catch (SQLException e) {
-            System.err.println("Erreur création utilisateur : " + e.getMessage());
-            return false;
+            if (e.getErrorCode() == 1062) {
+                throw new UtilisateurDAOException(
+                        "Le login « " + login + " » est déjà utilisé.", e);
+            }
+            throw new UtilisateurDAOException(
+                    "Erreur SQL lors de la création du compte « " + login + " ».", e);
         }
     }
 
-    public boolean toggleActif(int id, boolean actif) {
+
+    public void toggleActif(int id, boolean actif)
+            throws ConnexionException, UtilisateurDAOException {
+
         String sql = "UPDATE users SET actif = ? WHERE id = ?";
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, actif ? 1 : 0);
             ps.setInt(2, id);
-            return ps.executeUpdate() > 0;
+
+            int lignesAffectees = ps.executeUpdate();
+            if (lignesAffectees == 0) {
+                throw new UtilisateurDAOException(
+                        "Aucun utilisateur trouvé avec l'id=" + id
+                                + " pour modifier son statut.");
+            }
+
+        } catch (ConnexionException e) {
+            throw e;
+
         } catch (SQLException e) {
-            System.err.println("Erreur toggle actif : " + e.getMessage());
-            return false;
+            throw new UtilisateurDAOException(
+                    "Erreur SQL lors du changement de statut (id=" + id + ").", e);
         }
     }
 
-    public boolean supprimerUtilisateur(int id) {
+
+    public void supprimerUtilisateur(int id)
+            throws ConnexionException, UtilisateurDAOException {
+
         String sql = "DELETE FROM users WHERE id = ?";
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, id);
-            return ps.executeUpdate() > 0;
+
+            int lignesAffectees = ps.executeUpdate();
+            if (lignesAffectees == 0) {
+                throw new UtilisateurDAOException(
+                        "Aucun utilisateur trouvé avec l'id=" + id + " à supprimer.");
+            }
+
+        } catch (ConnexionException e) {
+            throw e;
+
         } catch (SQLException e) {
-            System.err.println("Erreur suppression utilisateur : " + e.getMessage());
-            return false;
+            throw new UtilisateurDAOException(
+                    "Erreur SQL lors de la suppression de l'utilisateur id="
+                            + id + ".", e);
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-    private void mettreAJourDerniereConnexion(int id, Connection conn) throws SQLException {
+
+    private void mettreAJourDerniereConnexion(int id, Connection conn)
+            throws SQLException {
+
         String sql = "UPDATE users SET derniere_connexion = NOW() WHERE id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             ps.executeUpdate();
         }
     }
+
 
     private Utilisateur mapRow(ResultSet rs) throws SQLException {
         Utilisateur u = new Utilisateur();
